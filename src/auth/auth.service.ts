@@ -28,13 +28,13 @@ export class AuthService {
     };
   }
 
-  generateToken(createTokenDto: createTokenDto) {
+  async generateToken(createTokenDto: createTokenDto) {
     const { code_verifier, code } = createTokenDto;
 
     const credentials = Buffer.from(
       `${process.env.CANVA_CLIENT_ID}:${process.env.CANVA_SECRET_KEY}`,
     ).toString('base64');
-    fetch('https://api.canva.com/rest/v1/oauth/token', {
+    const request = await fetch('https://api.canva.com/rest/v1/oauth/token', {
       method: 'POST',
       headers: {
         Authorization: `Basic ${credentials}`,
@@ -43,18 +43,32 @@ export class AuthService {
       body: new URLSearchParams(
         `grant_type=authorization_code&code_verifier=${code_verifier}&code=${code}&client_id=${process.env.CANVA_CLIENT_ID}&client_secret=${process.env.CANVA_SECRET_KEY}`,
       ),
-    })
-      .then(async (response) => {
-        const data = (await response.json()) as tokenResponseData;
-        console.log('data', data);
-        return {
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
-        };
-      })
-      .catch((err) => console.error('errpr', err));
+    });
+    const data = (await request.json()) as tokenResponseData;
+    return {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    };
   }
 
+  async refreshTokens(refresh_token: string) {
+    console.log('refresh_token', refresh_token);
+    const credentials = Buffer.from(
+      `${process.env.CANVA_CLIENT_ID}:${process.env.CANVA_SECRET_KEY}`,
+    ).toString('base64');
+    const request = await fetch('https://api.canva.com/rest/v1/oauth/token', {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(
+        `grant_type=refresh_token&refresh_token=${refresh_token}`,
+      ),
+    });
+    const data = (await request.json()) as tokenResponseData;
+    return data;
+  }
   findAll() {
     return `This action returns all auth`;
   }

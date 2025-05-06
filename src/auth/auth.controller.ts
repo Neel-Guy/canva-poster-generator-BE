@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseInterceptors,
+  Headers,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
@@ -37,6 +38,11 @@ export class AuthController {
   @UseInterceptors(NoFilesInterceptor())
   tokenGenerator(@Body() createTokenDto: createTokenDto) {
     return this.authService.generateToken(createTokenDto);
+  }
+
+  @Get('/refresh-tokens')
+  refreshTokens(@Headers('refresh_token') refresh_token: string) {
+    return this.authService.refreshTokens(refresh_token);
   }
 
   @Get(':id')
