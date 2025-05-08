@@ -3,8 +3,7 @@ import { CreateCanvaDto } from './dto/create-canva.dto';
 import { UpdateCanvaDto } from './dto/update-canva.dto';
 import { templatesResponseData } from 'src/auth/types';
 import { CreateAutofillDto } from './dto/create-autofill.dto';
-import { Buffer } from 'buffer';
-import { createReadStream, statSync } from 'fs';
+import { createReadStream, statSync, unlink } from 'fs';
 import fetch from 'node-fetch';
 import { fileUploadTypes } from './types';
 
@@ -54,9 +53,26 @@ export class CanvaService {
       job: {
         id: '',
         status: '',
+        asset: {},
       },
     };
 
+    let imageAssetData = {
+      id: '',
+      name: '',
+      tags: [],
+      created_at: 0,
+      updated_at: 0,
+      thumbnail: {
+        url: '',
+        width: 0,
+        height: 0,
+      },
+      url: '',
+      width: 0,
+      height: 0,
+    };
+    let imageAssetId;
     const fileUpload = await fetch(
       'https://api.canva.com/rest/v1/asset-uploads',
       {
@@ -75,31 +91,35 @@ export class CanvaService {
       .then(async (response) => {
         const data = await response.json();
         fileUploadData = data as fileUploadTypes;
+        // delete the files from uploads after the job is completed
+        unlink(background.path, (err) => {
+          if (err) {
+            throw err;
+          } else {
+            console.log('file deleted');
+          }
+        });
       })
       .catch((err) => console.error(err));
 
-    // call the api after every 10 seconds till the job is completed
-    const interval = setInterval(() => {
-      fetch(
-        `https://api.canva.com/rest/v1/asset-uploads/${fileUploadData.job.id}`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: authorization,
-          },
+    const assetJob = await fetch(
+      `https://api.canva.com/rest/v1/asset-uploads/${fileUploadData.job.id}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: authorization,
         },
-      )
-        .then(async (response) => {
-          const data = await response.json();
-          const res = data as fileUploadTypes;
-          if (res?.job?.status === 'success') {
-            console.log('success', res);
-            clearInterval(interval);
-          }
-          console.log('assetData', data);
-        })
-        .catch((err) => console.error(err));
-    }, 10 * 1000);
+      },
+    )
+      .then(async (response) => {
+        const data = await response.json();
+        const res = data as fileUploadTypes;
+        if (res?.job?.status === 'success') {
+          imageAssetId = res?.job?.asset?.id ?? '';
+        }
+        console.log('assetData', data);
+      })
+      .catch((err) => console.error(err));
 
     const request = await fetch('https://api.canva.com/rest/v1/autofills', {
       method: 'POST',
