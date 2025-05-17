@@ -8,11 +8,11 @@ import {
   Delete,
   UseInterceptors,
   Headers,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
-import { createTokenDto } from './dto/create-token.dto';
 import { NoFilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('auth')
@@ -33,11 +33,15 @@ export class AuthController {
   codeGenerator() {
     return this.authService.generateCode();
   }
-
   @Get('/token-generator')
   @UseInterceptors(NoFilesInterceptor())
-  tokenGenerator(@Body() createTokenDto: createTokenDto) {
-    return this.authService.generateToken(createTokenDto);
+  async tokenGenerator(
+    @Query('code_verifier') code_verifier: string,
+    @Query('code') code: string,
+  ) {
+    // console.log('code_verifier:', code_verifier, 'code:', code);
+
+    return await this.authService.generateToken({ code_verifier, code });
   }
 
   @Get('/refresh-tokens')

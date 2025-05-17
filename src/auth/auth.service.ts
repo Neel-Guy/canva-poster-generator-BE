@@ -28,8 +28,8 @@ export class AuthService {
     };
   }
 
-  async generateToken(createTokenDto: createTokenDto) {
-    const { code_verifier, code } = createTokenDto;
+  async generateToken(params: createTokenDto) {
+    const { code_verifier, code } = params;
 
     const credentials = Buffer.from(
       `${process.env.CANVA_CLIENT_ID}:${process.env.CANVA_SECRET_KEY}`,
@@ -45,10 +45,7 @@ export class AuthService {
       ),
     });
     const data = (await request.json()) as tokenResponseData;
-    return {
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-    };
+    return data;
   }
 
   async refreshTokens(refresh_token: string) {

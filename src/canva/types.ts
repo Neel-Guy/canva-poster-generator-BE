@@ -23,3 +23,23 @@ export type AssetUploadErrorTypes = {
   code: string;
   message: string;
 };
+
+export type AutoFillJobResponseTypes = {
+  job: {
+    id: string;
+    status: string;
+    result: {
+      type: string;
+      design: {
+        id: string;
+        title: string;
+        url: string;
+        thumbnail: {
+          width: number;
+          height: number;
+          url: string;
+        };
+      };
+    };
+  };
+};
